@@ -416,7 +416,8 @@ def add_falls_to():
 def get_init_global_state(path_conditions_and_vars):
     global_state = {"balance" : {}, "pc": 0}
     init_is = init_ia = deposited_value = sender_address = receiver_address = gas_price = origin = currentCoinbase = currentNumber = currentDifficulty = currentGasLimit = callData = None
-
+# 对于智能合约而言，当执行到CALLDATASIZE、CALLDATALOAD等指令时，表示程序要获取外部的输入数据,此时我们用z3中的BitVec函数创建一个位向量变量来代替输入数据;
+# 当执行到LT、EQ等指令时，此时我们用z3创建一个类似If(ULE(xx,xx), 0, 1)的表达式。
     if global_params.INPUT_STATE:
         with open('state.json') as f:
             state = json.loads(f.read())
@@ -444,6 +445,8 @@ def get_init_global_state(path_conditions_and_vars):
                 currentGasLimit = int(state["env"]["currentGasLimit"], 16)
 
     # for some weird reason these 3 vars are stored in path_conditions insteaad of global_state
+    # 由于某些奇怪的原因，这3个vars被存储在path_conditions而不是global_state中
+    # Is对应的是source，Ia对应的是destination，Iv对应的是amount
     else:
         sender_address = BitVec("Is", 256)
         receiver_address = BitVec("Ia", 256)
@@ -459,14 +462,14 @@ def get_init_global_state(path_conditions_and_vars):
     path_conditions_and_vars["path_condition"].append(constraint)
     constraint = (init_is >= deposited_value)
     path_conditions_and_vars["path_condition"].append(constraint)
-    constraint = (init_ia >= BitVecVal(0, 256))
+    constraint = (init_ia >= BitVecVal(0, 256))#接收地址要合法
     path_conditions_and_vars["path_condition"].append(constraint)
 
     # update the balances of the "caller" and "callee"
 
     global_state["balance"]["Is"] = (init_is - deposited_value)
     global_state["balance"]["Ia"] = (init_ia + deposited_value)
-
+    # 用gen_xx产生默认值
     if not gas_price:
         new_var_name = gen.gen_gas_price_var()
         gas_price = BitVec(new_var_name, 256)
@@ -521,7 +524,7 @@ def get_init_global_state(path_conditions_and_vars):
 def get_start_block_to_func_sig():
     state = 0
     func_sig = None
-    for pc, instr in six.iteritems(instructions):
+    for pc, instr in six.iteritems(instructions):#python2里面，dict.items返回的是数组，six.iteritems(dict)则返回生成器。
         if state == 0 and instr.startswith('PUSH4'):
             state += 1
             func_sig = instr.split(' ')[1][2:]
@@ -535,7 +538,7 @@ def get_start_block_to_func_sig():
         else:
             state = 0
     return start_block_to_func_sig
-
+# 遍历整个指令集，找到起始为PUSH4，且后一位是EQ且再后一位是PUSH的，然后start_block_to_func_sig就记录下func_sig
 def full_sym_exec():
     # executing, starting from beginning
     path_conditions_and_vars = {"path_condition" : []}
@@ -548,6 +551,7 @@ def full_sym_exec():
 
 
 # Symbolically executing a block from the start address
+#从开始地址符号执行一个块
 def sym_exec_block(params, block, pre_block, depth, func_call, current_func_name):
     global solver
     global visited_edges
@@ -557,14 +561,20 @@ def sym_exec_block(params, block, pre_block, depth, func_call, current_func_name
     global all_gs
     global results
     global g_src_map
-
+    # 对已经访问过的进行标记
     visited = params.visited
+    # 作为符号化执行的虚拟出来的栈
     stack = params.stack
+    
     mem = params.mem
+    # 符号化执行虚拟出来的内存
     memory = params.memory
+    # 这是在上面定义的一些链的常量(主要是z3)
     global_state = params.global_state
     sha3_list = params.sha3_list
+    # 用于填充block与block之间的中间条件以及变量
     path_conditions_and_vars = params.path_conditions_and_vars
+    # 代表着分析的j结果
     analysis = params.analysis
     calls = params.calls
     overflow_pcs = params.overflow_pcs
