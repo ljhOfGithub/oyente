@@ -574,7 +574,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call, current_func_name
     sha3_list = params.sha3_list
     # 用于填充block与block之间的中间条件以及变量
     path_conditions_and_vars = params.path_conditions_and_vars
-    # 代表着分析的j结果
+    # 代表着分析的结果
     analysis = params.analysis
     calls = params.calls
     overflow_pcs = params.overflow_pcs
@@ -587,7 +587,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call, current_func_name
     log.debug("Reach block address %d \n", block)
 
     if g_src_map:
-        if block in start_block_to_func_sig:
+        if block in start_block_to_func_sig:#如果block在起始block，或者在函数清单内
             func_sig = start_block_to_func_sig[block]
             current_func_name = g_src_map.sig_to_func[func_sig]
             pattern = r'(\w[\w\d_]*)\((.*)\)$'
