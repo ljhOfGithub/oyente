@@ -617,14 +617,14 @@ def sym_exec_block(params, block, pre_block, depth, func_call, current_func_name
     except KeyError:
         log.debug("This path results in an exception, possibly an invalid jump address")
         return ["ERROR"]
-
+	# 循环执行当前block的指令，所有的符号化执行的内容全部都在sym_exec_ins函数中
     for instr in block_ins:
         sym_exec_ins(params, block, instr, func_call, current_func_name)
 
-    # Mark that this basic block in the visited blocks
+    # Mark that this basic block in the visited blocks    # visited中加入此block
     visited.append(block)
     depth += 1
-
+	# 把之前添加的一些bug结果进行汇总
     reentrancy_all_paths.append(analysis["reentrancy_bug"])
     if analysis["money_flow"] not in money_flow_all_paths:
         global_problematic_pcs["money_concurrency_bug"].append(analysis["money_concurrency_bug"])
@@ -634,12 +634,14 @@ def sym_exec_block(params, block, pre_block, depth, func_call, current_func_name
         all_gs.append(copy_global_values(global_state))
 
     # Go to next Basic Block(s)
+    # 然后前往下一个block
+    # 如果这个block的类型是terminal 或者 递归的深度大于最大深度限制了
     if jump_type[block] == "terminal" or depth > global_params.DEPTH_LIMIT:
         global total_no_of_paths
         global no_of_test_cases
 
         total_no_of_paths += 1
-
+		# 如果要求生成测试用例，则...
         if global_params.GENERATE_TEST_CASES:
             try:
                 model = solver.model()
@@ -655,44 +657,53 @@ def sym_exec_block(params, block, pre_block, depth, func_call, current_func_name
                 pass
 
         log.debug("TERMINATING A PATH ...")
+        # 显示结果
         display_analysis(analysis)
         if is_testing_evm():
             compare_storage_and_gas_unit_test(global_state, analysis)
-
+	# 如果是没有条件语句的跳转
     elif jump_type[block] == "unconditional":  # executing "JUMP"
+	    # 继任者 = 当前block跳转的目标
         successor = vertices[block].get_jump_target()
+        # 新的参数
         new_params = params.copy()
+        # 获取新的program counter
         new_params.global_state["pc"] = successor
         if g_src_map:
+        	# 通过program counter和之前的source map获取源码
             source_code = g_src_map.get_source_code(global_state['pc'])
             if source_code in g_src_map.func_call_names:
                 func_call = global_state['pc']
         sym_exec_block(new_params, successor, block, depth, func_call, current_func_name)
     elif jump_type[block] == "falls_to":  # just follow to the next basic block
+     # 如果跳转类型是fall to，即什么都不做
         successor = vertices[block].get_falls_to()
         new_params = params.copy()
         new_params.global_state["pc"] = successor
         sym_exec_block(new_params, successor, block, depth, func_call, current_func_name)
     elif jump_type[block] == "conditional":  # executing "JUMPI"
-
+    # 如果跳转类型是条件跳转
         # A choice point, we proceed with depth first search
-
         branch_expression = vertices[block].get_branch_expression()
-
+		# 则先获取分支的表达式
         log.debug("Branch expression: " + str(branch_expression))
 
         solver.push()  # SET A BOUNDARY FOR SOLVER
-        solver.add(branch_expression)
+        # 给solver增加一个边界表达式
 
+        solver.add(branch_expression)
+		#  下面的这一部分是对JUMPI的条件为true检查
         try:
-            if solver.check() == unsat:
-                log.debug("INFEASIBLE PATH DETECTED")
-            else:
+            if solver.check() == unsat:        	# 如果solver检测处有不满足的地方
+                log.debug("INFEASIBLE PATH DETECTED")            	# 则返回有不可解的路径
+            else:            	# 则跳转到下一个目标
                 left_branch = vertices[block].get_jump_target()
                 new_params = params.copy()
                 new_params.global_state["pc"] = left_branch
+                # 在path_conditions_and_vars的变量中加入这一个分支的expression
                 new_params.path_conditions_and_vars["path_condition"].append(branch_expression)
                 last_idx = len(new_params.path_conditions_and_vars["path_condition"]) - 1
+                # 定位上一个idx发生的bug并保存
                 new_params.analysis["time_dependency_bug"][last_idx] = global_state["pc"]
                 sym_exec_block(new_params, left_branch, block, depth, func_call, current_func_name)
         except TimeoutError:
@@ -700,7 +711,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call, current_func_name
         except Exception as e:
             if global_params.DEBUG_MODE:
                 traceback.print_exc()
-
+		# 下面的条件是对JUMPI为false条件的检查
         solver.pop()  # POP SOLVER CONTEXT
 
         solver.push()  # SET A BOUNDARY FOR SOLVER
