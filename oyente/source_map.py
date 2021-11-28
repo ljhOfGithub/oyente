@@ -47,6 +47,20 @@ class SourceMap:
                 raise Exception("There is no such type of input")
             SourceMap.ast_helper = AstHelper(SourceMap.parent_filename, input_type, SourceMap.remap, SourceMap.allow_paths)
             SourceMap.func_to_sig_by_contract = SourceMap._get_sig_to_func_by_contract()
+            #ast_helper: 存储着合约的各种索引和输出合约索引和状态的辅助类函数。
+            #source：是一个在source_map中定义的结构体，保存了合约的字段。
+            #sources：应该是在多个源的时候使用。
+            #position_groups：包含着编译好的字节指令asm和辅助签名数据auxdata，其中begin映射着合约函数某函数开始的字符串位置，end映射着合约函数结束的字符串位置。
+            #案例：{'begin': 27, 'end': 141, 'name': 'PUSH', 'value': '60'}
+            #pragma solidity >=0.4.19;
+            #/*现在处于第27个字符*/
+            #contract test {
+            #    function helloworld() pure public returns (string)
+            #    {
+            #        return "hello world";
+            #    }
+            #}
+            #/*现在处于第141个字符*/
         self.source = self._get_source()
         self.positions = self._get_positions()
         self.instr_positions = {}

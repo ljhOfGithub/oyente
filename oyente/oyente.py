@@ -12,7 +12,7 @@ import subprocess
 import global_params
 from utils import run_command
 from input_helper import InputHelper
-
+#Oyente.py是我们整个项目的函数入口，主要承担着接受参数，存储变量以及调用不同函数的作用。
 def cmd_exists(cmd):
     return subprocess.call("type " + cmd, shell=True,
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE) == 0
@@ -96,7 +96,10 @@ def run_solidity_analysis(inputs):
         if return_code == 1:
             exit_code = 1
     return results, exit_code
-
+#analyze_solidity函数的主要工作为:
+#主要做的就是根据输入的类型，来获得我们想要的helper。
+#通过helper的get_inputs()函数，我们能够得到inputs变量。
+#将inputs变量传入run_solidity_analysis函数，就能得到我们想要的结果。
 def analyze_solidity(input_type='solidity'):
     global args
 
@@ -116,7 +119,10 @@ def analyze_solidity(input_type='solidity'):
 
 def main():
     # TODO: Implement -o switch.
-
+#main函数主要工作为:
+#实例化创建解析器，解析命令行传入的参数变量，参数变量部分存储于global_params.py中。
+#add_argument可以对应args内第二个参数，观察我们的调用指令就能看到args.source的值对应的是我们合约文件的地址。
+#由于没有别的参数，我们的函数将直接调用第227行的exit_code = analyze_solidity()
     global args
 
     parser = argparse.ArgumentParser()
