@@ -585,7 +585,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call, current_func_name
         return ["ERROR"]
 
     log.debug("Reach block address %d \n", block)
-
+    # 如果存在source_map
     if g_src_map:
         if block in start_block_to_func_sig:#如果block在起始block，或者在函数清单内
             func_sig = start_block_to_func_sig[block]
@@ -599,9 +599,9 @@ def sym_exec_block(params, block, pre_block, depth, func_call, current_func_name
     if current_edge in visited_edges:
         updated_count_number = visited_edges[current_edge] + 1
         visited_edges.update({current_edge: updated_count_number})
-    else:
+    else:# 如果当前的edges没有被visited过，则更新
         visited_edges.update({current_edge: 1})
-
+    # 如果这一个edges大于了循环的最高限制
     if visited_edges[current_edge] > global_params.LOOP_LIMIT:
         log.debug("Overcome a number of loop limit. Terminating this path ...")
         return stack
@@ -612,7 +612,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call, current_func_name
         return stack
 
     # Execute every instruction, one at a time
-    try:
+    try:# 获取当前block所有的指令
         block_ins = vertices[block].get_instructions()
     except KeyError:
         log.debug("This path results in an exception, possibly an invalid jump address")
