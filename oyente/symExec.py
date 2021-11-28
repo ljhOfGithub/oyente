@@ -676,7 +676,7 @@ def sym_exec_block(params, block, pre_block, depth, func_call, current_func_name
                 func_call = global_state['pc']
         sym_exec_block(new_params, successor, block, depth, func_call, current_func_name)
     elif jump_type[block] == "falls_to":  # just follow to the next basic block
-     # 如果跳转类型是fall to，即什么都不做
+     # 如果跳转类型是fall to，即什么都不做，执行下一个块
         successor = vertices[block].get_falls_to()
         new_params = params.copy()
         new_params.global_state["pc"] = successor
