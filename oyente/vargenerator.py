@@ -4,11 +4,11 @@ class Generator:
         self.countdata = 0
         self.count = 0
 
-    def gen_stack_var(self):
+    def gen_stack_var(self):#生成栈中变量序号，变量序号递增
         self.countstack += 1
         return "s" + str(self.countstack)
 
-    def gen_data_var(self):
+    def gen_data_var(self):#生成
         self.countdata += 1
         return "Id_" + str(self.countdata)
 
@@ -22,22 +22,22 @@ class Generator:
     def gen_mem_var(self, address):
         return "mem_" + str(address)
 
-    def gen_arbitrary_var(self):
+    def gen_arbitrary_var(self):#生成随机的序号
         self.count += 1
         return "some_var_" + str(self.count)
 
-    def gen_arbitrary_address_var(self):
+    def gen_arbitrary_address_var(self):#同上
         self.count += 1
         return "some_address_" + str(self.count)
 
-    def gen_owner_store_var(self, position, var_name=""):
+    def gen_owner_store_var(self, position, var_name=""):#
         return "Ia_store-%s-%s" % (str(position), var_name)
 
-    def gen_gas_var(self):
+    def gen_gas_var(self):#生成gas变量序号
         self.count += 1
         return "gas_" + str(self.count)
 
-    def gen_gas_price_var(self):
+    def gen_gas_price_var(self):#
         return "Ip"
 
     def gen_address_var(self):
