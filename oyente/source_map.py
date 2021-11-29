@@ -10,17 +10,17 @@ from ast_helper import AstHelper
 
 class Source:
     def __init__(self, filename):
-        self.filename = filename
+        self.filename = filename#source映射到文件名
         self.content = self._load_content()
         self.line_break_positions = self._load_line_break_positions()
 
     def _load_content(self):
-        with open(self.filename, 'rb') as f:
+        with open(self.filename, 'rb') as f:#读文件，二进制到utf8
             content = f.read().decode('UTF-8')
         return content
 
     def _load_line_break_positions(self):
-        return [i for i, letter in enumerate(self.content) if letter == '\n']
+        return [i for i, letter in enumerate(self.content) if letter == '\n']#分行，得到行号i
 
 class SourceMap:
     parent_filename = ""
@@ -33,7 +33,7 @@ class SourceMap:
 
     def __init__(self, cname, parent_filename, input_type, root_path="", remap="", allow_paths=""):
         self.root_path = root_path
-        self.cname = cname
+        self.cname = cname#contract name
         self.input_type = input_type
         if not SourceMap.parent_filename:
             SourceMap.remap = remap
@@ -70,9 +70,9 @@ class SourceMap:
         self.func_name_to_params = self._get_func_name_to_params()
         self.sig_to_func = self._get_sig_to_func()
 
-    def get_source_code(self, pc):
+    def get_source_code(self, pc):#
         try:
-            pos = self.instr_positions[pc]
+            pos = self.instr_positions[pc]#
         except:
             return ""
         begin = pos['begin']
@@ -85,7 +85,7 @@ class SourceMap:
         end = start + int(src[1])
         return self.source.content[start:end]
 
-    def get_buggy_line(self, pc):
+    def get_buggy_line(self, pc):#pc:program counter
         try:
             pos = self.instr_positions[pc]
         except:
@@ -198,11 +198,11 @@ class SourceMap:
 
     def _get_positions(self):
         if self.input_type == "solidity":
-            asm = SourceMap.position_groups[self.cname]['asm']['.data']['0']
+            asm = SourceMap.position_groups[self.cname]['asm']['.data']['0']#
         else:
-            filename, contract_name = self.cname.split(":")
-            asm = SourceMap.position_groups[filename][contract_name]['evm']['legacyAssembly']['.data']['0']
-        positions = asm['.code']
+            filename, contract_name = self.cname.split(":")#cname的样式是文件名:合约名
+            asm = SourceMap.position_groups[filename][contract_name]['evm']['legacyAssembly']['.data']['0']#
+        positions = asm['.code']#忘了是静态段还是动态段的.code
         while(True):
             try:
                 positions.append(None)
@@ -212,7 +212,7 @@ class SourceMap:
                 break
         return positions
 
-    def _convert_offset_to_line_column(self, pos):
+    def _convert_offset_to_line_column(self, pos):#偏移量到行号列号
         ret = {}
         ret['begin'] = None
         ret['end'] = None
@@ -229,12 +229,12 @@ class SourceMap:
         col = pos - begin_col
         return {'line': line, 'column': col}
 
-    def _find_lower_bound(self, target, array):
+    def _find_lower_bound(self, target, array):#
         start = 0
         length = len(array)
         while length > 0:
             half = length >> 1
-            middle = start + half
+            middle = start + half#中间位置
             if array[middle] <= target:
                 length = length - 1 - half
                 start = middle + 1
@@ -242,5 +242,5 @@ class SourceMap:
                 length = half
         return start - 1
 
-    def get_filename(self):
+    def get_filename(self):#文件名
         return self.cname.split(":")[0]
