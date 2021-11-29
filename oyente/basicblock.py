@@ -16,16 +16,16 @@ class BasicBlock:
     def add_instruction(self, instruction):
         self.instructions.append(instruction)
 
-    def get_instructions(self):
+    def get_instructions(self):#获得基本块中的指令列表
         return self.instructions
 
-    def set_block_type(self, type):
+    def set_block_type(self, type):#当前分支的类型，如有条件跳转和无条件跳转
         self.type = type
 
     def get_block_type(self):
         return self.type
 
-    def set_falls_to(self, address):
+    def set_falls_to(self, address):#设置无跳转时的下一个块
         self.falls_to = address
 
     def get_falls_to(self):
@@ -40,7 +40,7 @@ class BasicBlock:
     def get_jump_target(self):
         return self.jump_target
 
-    def set_branch_expression(self, branch):
+    def set_branch_expression(self, branch):#设置分支表达式
         self.branch_expression = branch
 
     def get_branch_expression(self):

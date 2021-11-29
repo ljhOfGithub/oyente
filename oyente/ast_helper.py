@@ -3,7 +3,7 @@ from ast_walker import AstWalker
 import json
 
 class AstHelper:
-    def __init__(self, filename, input_type, remap, allow_paths=""):
+    def __init__(self, filename, input_type, remap, allow_paths=""):#input_type:solidity or json
         self.input_type = input_type
         self.allow_paths = allow_paths
         if input_type == "solidity":
@@ -18,10 +18,10 @@ class AstHelper:
     def get_source_list_standard_json(self, filename):
         with open('standard_json_output', 'r') as f:
             out = f.read()
-        out = json.loads(out)
+        out = json.loads(out)#json->python
         return out["sources"]
 
-    def get_source_list(self, filename):
+    def get_source_list(self, filename):#solidity->json->python
         if self.allow_paths:
             cmd = "solc --combined-json ast %s %s --allow-paths %s" % (self.remap, filename, self.allow_paths)
         else:
