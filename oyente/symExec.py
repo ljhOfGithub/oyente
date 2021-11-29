@@ -31,7 +31,11 @@ CONSTANT_ONES_159 = BitVecVal((1 << 160) - 1, 256)
 Assertion = namedtuple('Assertion', ['pc', 'model'])
 Underflow = namedtuple('Underflow', ['pc', 'model'])
 Overflow = namedtuple('Overflow', ['pc', 'model'])
-
+#这个文件是这个框架最重要也是最难以理解的文件，它的基本步骤可以描述成：
+#初始化和收集各种变量。
+#生成control flow graph(CFG)，这是一种在每个区块中只含有逻辑指令，不含有分支指令的图。
+#深度优先遍历CFG，获取整一个逻辑框架所有的可能性。
+#对所有的可能性方案用z3求解器进行验算，对于位置的形参，使用symbolic execution的方式。
 class Parameter:
     def __init__(self, **kwargs):
         attr_defaults = {
@@ -284,6 +288,7 @@ def mapping_non_push_instruction(current_line_content, current_ins_address, idx,
 # 1. Parse the disassembled file
 # 2. Then identify each basic block (i.e. one-in, one-out)
 # 3. Store them in vertices
+#这个函数主要做的有： 解析汇编文件 判断区分不同的基础区块 把他们存在顶点中
 def collect_vertices(tokens):
     global g_src_map
     if g_src_map:
@@ -301,7 +306,7 @@ def collect_vertices(tokens):
     current_line_content = ""
     wait_for_push = False
     is_new_block = False
-
+#全局变量instructions负责记录指令。 全局变量jump_type负责记录分支的类型和位置。
     for tok_type, tok_string, (srow, scol), _, line_number in tokens:
         if wait_for_push is True:
             push_val = ""
@@ -376,7 +381,7 @@ def collect_vertices(tokens):
         if key not in jump_type:
             jump_type[key] = "falls_to"
 
-
+#这个函数的主要作用是构建一个没有链接的vertices和edges。 vertices内存储着BasicBlock，其内部存有该块的指令
 def construct_bb():
     global vertices
     global edges
@@ -400,7 +405,7 @@ def construct_bb():
 def construct_static_edges():
     add_falls_to()  # these edges are static
 
-
+#这个函数的作用就是在jump_type不是terminal或者unconditional的时候，把节点的target赋给edges和vertices
 def add_falls_to():
     global vertices
     global edges
@@ -539,6 +544,10 @@ def get_start_block_to_func_sig():
             state = 0
     return start_block_to_func_sig
 # 遍历整个指令集，找到起始为PUSH4，且后一位是EQ且再后一位是PUSH的，然后start_block_to_func_sig就记录下func_sig
+
+#这一个函数涉及到的是oyente框架最关键的内容，就是对于合约安全的各种检测
+#主要的步骤就是 获取全部参数，存入param变量。 使用sym_exec_block对所有的块进行深度优先遍历。 
+#进行symbolic execution，对EVM的栈的内容进行模仿，并且使用求解器约束参数的范围。 对不同的可能出现的问题进行逻辑判断，返回不同的异常信息——例如求解器的约束对没有限制的整数进行范围的判定等。 
 def full_sym_exec():
     # executing, starting from beginning
     path_conditions_and_vars = {"path_condition" : []}
@@ -1199,7 +1208,7 @@ def sym_exec_ins(params, block, instr, func_call, current_func_name):
             stack.insert(0, computed)
         else:
             raise ValueError('STACK underflow')
-    elif opcode == "SGT":  # Not fully faithful to signed comparison
+    elif opcode == "SGT":  # Not fully faithful to signed comparison不完全符合符号比较
         if len(stack) > 1:
             global_state["pc"] = global_state["pc"] + 1
             first = stack.pop(0)
@@ -2480,3 +2489,5 @@ def run(disasm_file=None, source_file=None, source_map=None):
         ret = detect_vulnerabilities()
         closing_message()
         return ret
+#这个函数获取了生成的汇编文件的位置，源文件的位置和SourceMap的对象。
+#然后run函数调用了analyze()

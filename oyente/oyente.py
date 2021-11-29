@@ -77,7 +77,7 @@ def analyze_bytecode():
         six.print_(json.dumps(result))
 
     return exit_code
-
+#这里我们对inputs的内容进行遍历，并通过symExec.run来获取结果
 def run_solidity_analysis(inputs):
     results = {}
     exit_code = 0
