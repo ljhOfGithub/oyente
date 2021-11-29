@@ -1,6 +1,9 @@
 # return true if the two paths have different flows of money
 # later on we may want to return more meaningful output: e.g. if the concurrency changes
 # the amount of money or the recipient.
+#如果两条路径的资金流不同，返回true
+#稍后，我们可能想要返回更有意义的输出:例如，如果并发性改变
+#金额或收款人。
 import shlex
 import subprocess
 import json
@@ -16,13 +19,13 @@ from z3 import *
 from z3.z3util import get_vars
 
 def ceil32(x):
-    return x if x % 32 == 0 else x + 32 - (x % 32)
+    return x if x % 32 == 0 else x + 32 - (x % 32)#x向上取32的倍数
 
 def isSymbolic(value):
-    return not isinstance(value, six.integer_types)
+    return not isinstance(value, six.integer_types)#不是整数，则是变量
 
 def isReal(value):
-    return isinstance(value, six.integer_types)
+    return isinstance(value, six.integer_types)#这里针对python2和python3中各自支持的int类型进行了区分：在python2中，存在 int 和 long 两种整数类型；在python3中，仅存在一种类型int。
 
 def isAllReal(*args):
     for element in args:
@@ -32,16 +35,16 @@ def isAllReal(*args):
 
 def to_symbolic(number):
     if isReal(number):
-        return BitVecVal(number, 256)
+        return BitVecVal(number, 256)#整数转换为256位的位向量
     return number
 
 def to_unsigned(number):
     if number < 0:
-        return number + 2**256
+        return number + 2**256#复数转换为无符号整数
     return number
 
 def to_signed(number):
-    if number > 2**(256 - 1):
+    if number > 2**(256 - 1):#向上溢出为负数
         return (2**(256) - number) * (-1)
     else:
         return number
@@ -50,14 +53,14 @@ def check_sat(solver, pop_if_exception=True):
     try:
         ret = solver.check()
         if ret == unknown:
-            raise Z3Exception(solver.reason_unknown())
+            raise Z3Exception(solver.reason_unknown())#reason_unknown()Return a string describing why the last `check()` returned `unknown`.
     except Exception as e:
         if pop_if_exception:
             solver.pop()
         raise e
     return ret
 
-def custom_deepcopy(input):
+def custom_deepcopy(input):#自定义深拷贝
     output = {}
     for key in input:
         if isinstance(input[key], list):
@@ -74,7 +77,7 @@ def is_storage_var(var):
     return var.startswith('Ia_store')
 
 
-# copy only storage values/ variables from a given global state
+# copy only storage values/ variables from a given global state只从给定的全局状态复制存储值/变量
 # TODO: add balance in the future
 def copy_global_values(global_state):
     return global_state['Ia']
@@ -290,6 +293,9 @@ def get_distinct_contracts(list_of_contracts = "concurr.csv"):
 def run_command(cmd):
     FNULL = open(os.devnull, 'w')
     solc_p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE, stderr=FNULL)
+    #shlex.split(s, comments=False, posix=True)
+    #用类似 shell 的语法拆分字符串 s。如果 comments 为 False (默认值)，则不会解析给定字符串中的注释 (commenters 属性的 shlex 实例设为空字符串)。 
+    #本函数默认工作于 POSIX 模式下，但若 posix 参数为 False，则采用非 POSIX 模式。
     return solc_p.communicate()[0].decode('utf-8', 'strict')
 
 def run_command_with_err(cmd):
