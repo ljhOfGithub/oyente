@@ -50,7 +50,8 @@ class SourceMap:
             #ast_helper: 存储着合约的各种索引和输出合约索引和状态的辅助类函数。
             #source：是一个在source_map中定义的结构体，保存了合约的字段。
             #sources：应该是在多个源的时候使用。
-            #position_groups：包含着编译好的字节指令asm和辅助签名数据auxdata，其中begin映射着合约函数某函数开始的字符串位置，end映射着合约函数结束的字符串位置。
+            #position_groups：包含着编译好的字节指令asm和辅助签名数据auxdata
+            #其中begin映射着合约函数某函数开始的字符串位置，end映射着合约函数结束的字符串位置。
             #案例：{'begin': 27, 'end': 141, 'name': 'PUSH', 'value': '60'}
             #pragma solidity >=0.4.19;
             #/*现在处于第27个字符*/
@@ -80,10 +81,10 @@ class SourceMap:
         return self.source.content[begin:end]
 
     def get_source_code_from_src(self, src):
-        src = src.split(":")
+        src = src.split(":")#
         start = int(src[0])
         end = start + int(src[1])
-        return self.source.content[start:end]
+        return self.source.content[start:end]#根据起止位置截取源码
 
     def get_buggy_line(self, pc):#pc:program counter
         try:
@@ -170,7 +171,7 @@ class SourceMap:
         return func_call_names
 
     @classmethod
-    def _get_sig_to_func_by_contract(cls):
+    def _get_sig_to_func_by_contract(cls):#当类调用classmethod方法时，默认把此类传进去
         if cls.allow_paths:
             cmd = 'solc --combined-json hashes %s %s --allow-paths %s' % (cls.remap, cls.parent_filename, cls.allow_paths)
         else:
@@ -202,11 +203,11 @@ class SourceMap:
         else:
             filename, contract_name = self.cname.split(":")#cname的样式是文件名:合约名
             asm = SourceMap.position_groups[filename][contract_name]['evm']['legacyAssembly']['.data']['0']#
-        positions = asm['.code']#忘了是静态段还是动态段的.code
+        positions = asm['.code']#是静态段.code
         while(True):
             try:
                 positions.append(None)
-                positions += asm['.data']['0']['.code']
+                positions += asm['.data']['0']['.code']#动态段的.data
                 asm = asm['.data']['0']
             except:
                 break
