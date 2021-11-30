@@ -1,4 +1,5 @@
 from tqdm import tqdm
+#为论文开发的实用程序的集合在misc_utils。使用它们的风险由你自己承担——它们大多是一次性的。  generate-graphs.py-包含许多从合同中获取统计信息的函数。 get_source.py-可以使用get_contract_code函数从EtherScan检索合同源 transaction_scrape.py-包含检索特定契约的up-to-date事务信息的函数。
 import json
 import re
 import numpy as np
