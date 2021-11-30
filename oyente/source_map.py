@@ -10,8 +10,8 @@ from ast_helper import AstHelper
 
 class Source:
     def __init__(self, filename):
-        self.filename = filename#source映射到文件名
-        self.content = self._load_content()
+        self.filename = filename#source对象映射到文件名
+        self.content = self._load_content()#文件内容，utf8编码
         self.line_break_positions = self._load_line_break_positions()
 
     def _load_content(self):
@@ -19,8 +19,8 @@ class Source:
             content = f.read().decode('UTF-8')
         return content
 
-    def _load_line_break_positions(self):
-        return [i for i, letter in enumerate(self.content) if letter == '\n']#分行，得到行号i
+    def _load_line_break_positions(self):#换行符所在文件中的字符序号就是line_break_position，构成的列表是line_break_positions
+        return [i for i, letter in enumerate(self.content) if letter == '\n']#分行，得到行号i；如果遍历到换行符，则返回换行符所在的字符序号，字符序号构成一个列表
 
 class SourceMap:
     parent_filename = ""
@@ -34,7 +34,7 @@ class SourceMap:
     def __init__(self, cname, parent_filename, input_type, root_path="", remap="", allow_paths=""):
         self.root_path = root_path
         self.cname = cname#contract name
-        self.input_type = input_type
+        self.input_type = input_type#solidity或者json
         if not SourceMap.parent_filename:
             SourceMap.remap = remap
             SourceMap.allow_paths = allow_paths
@@ -150,9 +150,9 @@ class SourceMap:
 
     def _get_source(self):
         fname = self.get_filename()
-        if fname not in SourceMap.sources:
+        if fname not in SourceMap.sources:#添加原来没有sourcemap的文件，构造一个字典，key是fname，value是Source对象，Source对象传入fname
             SourceMap.sources[fname] = Source(fname)
-        return SourceMap.sources[fname]
+        return SourceMap.sources[fname]#返回文件名对应的Source对象
 
     def _get_callee_src_pairs(self):
         return SourceMap.ast_helper.get_callee_src_pairs(self.cname)
@@ -199,10 +199,10 @@ class SourceMap:
 
     def _get_positions(self):
         if self.input_type == "solidity":
-            asm = SourceMap.position_groups[self.cname]['asm']['.data']['0']#
+            asm = SourceMap.position_groups[self.cname]['asm']['.data']['0']#asm中的动态段的开始位置
         else:
             filename, contract_name = self.cname.split(":")#cname的样式是文件名:合约名
-            asm = SourceMap.position_groups[filename][contract_name]['evm']['legacyAssembly']['.data']['0']#
+            asm = SourceMap.position_groups[filename][contract_name]['evm']['legacyAssembly']['.data']['0']#evm.legacyAssembly - Old-style assembly format in JSON
         positions = asm['.code']#是静态段.code
         while(True):
             try:
