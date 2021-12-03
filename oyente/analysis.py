@@ -12,7 +12,8 @@ log = logging.getLogger(__name__)
 
 # THIS IS TO DEFINE A SKELETON FOR ANALYSIS
 # FOR NEW TYPE OF ANALYSIS: add necessary details to the skeleton functions
-
+#定义分析的框架
+#新的分析类型:为骨架函数添加必要的细节
 def set_cur_file(c_file):
     global cur_file
     cur_file = c_file
@@ -30,12 +31,14 @@ def init_analysis():
 
 
 # Money flow: (source, destination, amount)
-
+#资金流:(来源、目的地、金额)
 def display_analysis(analysis):
     logging.debug("Money flow: " + str(analysis["money_flow"]))
 
 # Check if this call has the Reentrancy bug
 # Return true if it does, false otherwise
+#检查这个调用是否有重入bug
+#是返回true，否则返回false
 def check_reentrancy_bug(path_conditions_and_vars, stack, global_state):
     path_condition = path_conditions_and_vars["path_condition"]
     new_path_condition = []
@@ -63,6 +66,8 @@ def check_reentrancy_bug(path_conditions_and_vars, stack, global_state):
     solver.add(new_path_condition)
     # 2300 is the outgas used by transfer and send.
     # If outgas > 2300 when using call.gas.value then the contract will be considered to contain reentrancy bug
+    # 2300是传输和发送使用的外气。
+    #如果使用call.gas.value时outgas > 2300，那么该合同将被认为包含重入bug
     solver.add(stack[0] > 2300)
     # transfer_amount > deposit_amount => reentrancy
     solver.add(stack[2] > BitVec('Iv', 256))
@@ -77,7 +82,11 @@ def calculate_gas(opcode, stack, mem, global_state, analysis, solver):
     gas_memory = analysis["gas_mem"]
     # In some opcodes, gas cost is not only depend on opcode itself but also current state of evm
     # For symbolic variables, we only add base cost part for simplicity
-    if opcode in ("LOG0", "LOG1", "LOG2", "LOG3", "LOG4") and len(stack) > 1:
+    #在某些操作码中，gas的成本不仅取决于操作码本身，还取决于evm的当前状态
+    #对于符号变量，为了简单起见，我们只添加基本成本部分
+    #检查这个调用是否有重入bug
+    #返回true，否则返回false
+    if opcode in ("LOG0", "LOG1", "LOG2", "LOG3", "LOG4") and len(stack) > 1:#fires an event
         if isReal(stack[1]):
             gas_increment += GCOST["Glogdata"] * stack[1]
     elif opcode == "EXP" and len(stack) > 1:
@@ -96,12 +105,12 @@ def calculate_gas(opcode, stack, mem, global_state, analysis, solver):
                     storage_value = global_state["Ia"][int(stack[0])]
                 except:
                     storage_value = global_state["Ia"][str(stack[0])]
-                # when we change storage value from zero to non-zero
+                # when we change storage value from zero to non-zero当存储值从零变为非零时
                 if storage_value == 0 and stack[1] != 0:
                     gas_increment += GCOST["Gsset"]
                 else:
                     gas_increment += GCOST["Gsreset"]
-            except: # when storage address at considered key is empty
+            except: # when storage address at considered key is empty当存储地址在考虑的关键是空
                 if stack[1] != 0:
                     gas_increment += GCOST["Gsset"]
                 elif stack[1] == 0:
@@ -154,7 +163,7 @@ def calculate_gas(opcode, stack, mem, global_state, analysis, solver):
         pass # Not handle
 
 
-    #Calculate gas memory, add it to total gas used
+    #Calculate gas memory, add it to total gas used计算气体内存，将其加到总用气量中
     length = len(mem.keys()) # number of memory words
     new_gas_memory = GCOST["Gmemory"] * length + (length ** 2) // 512
     gas_increment += new_gas_memory - gas_memory
@@ -189,6 +198,9 @@ def update_analysis(analysis, opcode, stack, mem, global_state, path_conditions_
 # Check if it is possible to execute a path after a previous path
 # Previous path has prev_pc (previous path condition) and set global state variables as in gstate (only storage values)
 # Current path has curr_pc
+#检查是否可以在前一个路径之后执行一个路径
+#前一个路径具有prev_pc(前一个路径条件)，并像gstate一样设置全局状态变量(仅存储值)
+#当前路径有curr_pc
 def is_feasible(prev_pc, gstate, curr_pc):
     curr_pc = list(curr_pc)
     new_pc = []
@@ -215,6 +227,10 @@ def is_feasible(prev_pc, gstate, curr_pc):
 # 2. We then check if two paths cannot be executed next to each other, for example they
 # are two paths yielded from this branch condition ``if (locked)"
 # 3. More checks are to come
+#检测两个流是否真的有竞争条件，即检查是否在路径I之后执行路径j。
+# 1。我们首先从一个简单的检查开始，看看一个路径是否编辑了某个存储变量，从而使另一个路径不可行的
+# 2。然后，我们检查两条路径是否不能相邻执行，例如，它们是由这个分支条件' ' if (locked)产生的两条路径。
+# 3。更多的支票即将到来
 def is_false_positive(i, j, all_gs, path_conditions):
     pathi = path_conditions[i]
     pathj = path_conditions[j]
@@ -230,7 +246,7 @@ def is_false_positive(i, j, all_gs, path_conditions):
         return True
 
 
-# Simple check if two flows of money are different
+# Simple check if two flows of money are different简单地检查两种资金流动是否不同
 def is_diff(flow1, flow2):
     if len(flow1) != len(flow2):
         return 1

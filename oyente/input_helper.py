@@ -76,6 +76,7 @@ class InputHelper:
                 c_source = re.sub(self.root_path, "", c_source)
                 if self.input_type == InputHelper.SOLIDITY:
                     source_map = SourceMap(contract, self.source, 'solidity', self.root_path, self.remap, self.allow_paths)
+                    
                 else:
                     source_map = SourceMap(contract, self.source, 'standard json', self.root_path)
                 disasm_file = self._get_temporary_files(contract)['disasm']
