@@ -43,11 +43,11 @@ def check_reentrancy_bug(path_conditions_and_vars, stack, global_state):
     path_condition = path_conditions_and_vars["path_condition"]
     new_path_condition = []
     for expr in path_condition:
-        if not is_expr(expr):
+        if not is_expr(expr):#The function is_expr(n) returns True if n is an expression
             continue
         list_vars = get_vars(expr)
         for var in list_vars:
-            # check if a var is global
+            # check if a var is global是否全局变量
             if is_storage_var(var):
                 pos = get_storage_position(var)
                 if pos in global_state['Ia']:

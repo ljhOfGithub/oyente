@@ -77,19 +77,20 @@ def is_storage_var(var):
     return var.startswith('Ia_store')
 
 
-# copy only storage values/ variables from a given global state只从给定的全局状态复制存储值/变量
+# copy only storage values/ variables from a given global state
+#只从给定的全局状态复制存储值/变量
 # TODO: add balance in the future
 def copy_global_values(global_state):
     return global_state['Ia']
 
-# check if a variable is in an expression
+# check if a variable is in an expression#检查变量是否在表达式中
 def is_in_expr(var, expr):
     list_vars = get_vars(expr)
     set_vars = set(i.decl().name() for i in list_vars)
     return var in set_vars
 
 
-# check if an expression has any storage variables
+# check if an expression has any storage variables#检查表达式是否有存储变量
 def has_storage_vars(expr, storage_vars):
     list_vars = get_vars(expr)
     for var in list_vars:
@@ -115,6 +116,7 @@ def get_storage_position(var):
 # Rename variables to distinguish variables in two different paths.
 # e.g. Ia_store_0 in path i becomes Ia_store_0_old if Ia_store_0 is modified
 # else we must keep Ia_store_0 if its not modified
+#重命名变量，以区分两个不同路径中的变量。例如，如果Ia_store_0被修改，路径i中的Ia_store_0将变成Ia_store_0_old，否则，如果Ia_store_0没有被修改，我们必须保持Ia_store_0
 def rename_vars(pcs, global_states):
     ret_pcs = []
     vars_mapping = {}
@@ -130,7 +132,7 @@ def rename_vars(pcs, global_states):
                 # check if a var is global
                 if is_storage_var(var):
                     pos = get_storage_position(var)
-                    # if it is not modified then keep the previous name
+                    # if it is not modified then keep the previous name#如果没有修改，则保持原来的名称
                     if pos not in global_states:
                         continue
                 # otherwise, change the name of the variable
@@ -141,7 +143,7 @@ def rename_vars(pcs, global_states):
         ret_pcs.append(expr)
 
     ret_gs = {}
-    # replace variable in storage expression
+    # replace variable in storage expression#替换存储表达式中的变量
     for storage_addr in global_states:
         expr = global_states[storage_addr]
         # z3 4.1 makes me add this line
