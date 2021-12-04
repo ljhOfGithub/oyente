@@ -27,7 +27,7 @@ def isSymbolic(value):
 def isReal(value):
     return isinstance(value, six.integer_types)#这里针对python2和python3中各自支持的int类型进行了区分：在python2中，存在 int 和 long 两种整数类型；在python3中，仅存在一种类型int。
 
-def isAllReal(*args):
+def isAllReal(*args):#全是整数
     for element in args:
         if isSymbolic(element):
             return False
@@ -49,7 +49,7 @@ def to_signed(number):
     else:
         return number
 
-def check_sat(solver, pop_if_exception=True):
+def check_sat(solver, pop_if_exception=True):#检查是否有解
     try:
         ret = solver.check()
         if ret == unknown:
@@ -99,7 +99,7 @@ def has_storage_vars(expr, storage_vars):
     return False
 
 
-def get_all_vars(exprs):
+def get_all_vars(exprs):#返回表达式中的变量
     ret_vars = []
     for expr in exprs:
         if is_expr(expr):
@@ -135,12 +135,12 @@ def rename_vars(pcs, global_states):
                     # if it is not modified then keep the previous name#如果没有修改，则保持原来的名称
                     if pos not in global_states:
                         continue
-                # otherwise, change the name of the variable
+                # otherwise, change the name of the variable否则修改名称
                 new_var_name = var_name + '_old'
-                new_var = BitVec(new_var_name, 256)
+                new_var = BitVec(new_var_name, 256)#使用新名称
                 vars_mapping[var] = new_var
-                expr = substitute(expr, (var, vars_mapping[var]))
-        ret_pcs.append(expr)
+                expr = substitute(expr, (var, vars_mapping[var]))#替换
+        ret_pcs.append(expr)#新变量列表
 
     ret_gs = {}
     # replace variable in storage expression#替换存储表达式中的变量
@@ -160,7 +160,7 @@ def rename_vars(pcs, global_states):
                     # if it is not modified
                     if position not in global_states:
                         continue
-                # otherwise, change the name of the variable
+                # otherwise, change the name of the variable否则修改名称
                 new_var_name = var_name + '_old'
                 new_var = BitVec(new_var_name, 256)
                 vars_mapping[var] = new_var
@@ -170,7 +170,7 @@ def rename_vars(pcs, global_states):
     return ret_pcs, ret_gs
 
 
-# split a file into smaller files
+# split a file into smaller files分解一个文件到更小的文件
 def split_dicts(filename, nsub = 500):
     with open(filename) as json_file:
         c = json.load(json_file)
@@ -178,7 +178,7 @@ def split_dicts(filename, nsub = 500):
         file_index = 1
         for u, v in c.iteritems():
             current_file[u] = v
-            if len(current_file) == nsub:
+            if len(current_file) == nsub:#每500个字符分解为一个文件
                 with open(filename.split(".")[0] + "_" + str(file_index) + '.json', 'w') as outfile:
                     json.dump(current_file, outfile)
                     file_index += 1
@@ -191,8 +191,8 @@ def split_dicts(filename, nsub = 500):
 
 def do_split_dicts():
     for i in range(11):
-        split_dicts("contract" + str(i) + ".json")
-        os.remove("contract" + str(i) + ".json")
+        split_dicts("contract" + str(i) + ".json")#分解大文件
+        os.remove("contract" + str(i) + ".json")#删除原大文件
 
 
 def run_re_file(re_str, fn):
@@ -202,11 +202,11 @@ def run_re_file(re_str, fn):
         return re.findall(re_str, data)
 
 
-def get_contract_info(contract_addr):
+def get_contract_info(contract_addr):#
     six.print_("Getting info for contracts... " + contract_addr)
     file_name1 = "tmp/" + contract_addr + "_txs.html"
     file_name2 = "tmp/" + contract_addr + ".html"
-    # get number of txs
+    # get number of txs获得交易的参数
     txs = "unknown"
     value = "unknown"
     re_txs_value = r"<span>A total of (.+?) transactions found for address</span>"
@@ -216,7 +216,7 @@ def get_contract_info(contract_addr):
         value = run_re_file(re_str_value, file_name2)
     except Exception as e:
         try:
-            os.system("wget -O %s http://etherscan.io/txs?a=%s" % (file_name1, contract_addr))
+            os.system("wget -O %s http://etherscan.io/txs?a=%s" % (file_name1, contract_addr))#获取线上合约的交易参数
             re_txs_value = r"<span>A total of (.+?) transactions found for address</span>"
             txs = run_re_file(re_txs_value, file_name1)
 
@@ -230,15 +230,15 @@ def get_contract_info(contract_addr):
 
 
 def get_contract_stats(list_of_contracts):
-    with open("concurr.csv", "w") as stats_file:
+    with open("concurr.csv", "w") as stats_file:#写入合约的参数
         fp = csv.writer(stats_file, delimiter=',')
-        fp.writerow(["Contract address", "No. of paths", "No. of concurrency pairs", "Balance", "No. of TXs", "Note"])
+        fp.writerow(["Contract address", "No. of paths", "No. of concurrency pairs", "Balance", "No. of TXs", "Note"])#写入csv文件的一行作为表头
         with open(list_of_contracts, "r") as f:
             for contract in f.readlines():
                 contract_addr = contract.split()[0]
                 value, txs = get_contract_info(contract_addr)
                 fp.writerow([contract_addr, contract.split()[1], contract.split()[2],
-                             value, txs, contract.split()[3:]])
+                             value, txs, contract.split()[3:]])#写入合约地址，合约路径数，合约的冲突对，合约的余额，合约的交易数，合约的note
 
 
 def get_time_dependant_contracts(list_of_contracts):
