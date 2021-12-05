@@ -64,9 +64,9 @@ def initGlobalVars():
 
     if global_params.PARALLEL:
         t2 = Then('simplify', 'solve-eqs', 'smt')#用于添加tactic对象的函数Then
-        _t = Then('tseitin-cnf-core', 'split-clause')
-        t1 = ParThen(_t, t2)
-        solver = OrElse(t1, t2).solver()
+        _t = Then('tseitin-cnf-core', 'split-clause')#split-clause will select a clause Or(f_1, ..., f_n) in the input goal, and split it n subgoals
+        t1 = ParThen(_t, t2)#Return a tactic that applies t1 and then t2 to every subgoal produced by t1返回一个对t1产生的每个子目标分别应用t1和t2的策略
+        solver = OrElse(t1, t2).solver()#OrElse(t, s) first applies t to the given goal, if it fails then returns the result of s applied to the given goal
     else:
         solver = Solver()
 
