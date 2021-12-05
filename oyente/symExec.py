@@ -63,7 +63,7 @@ def initGlobalVars():
     # Z3 solver
 
     if global_params.PARALLEL:
-        t2 = Then('simplify', 'solve-eqs', 'smt')
+        t2 = Then('simplify', 'solve-eqs', 'smt')#用于添加tactic对象的函数Then
         _t = Then('tseitin-cnf-core', 'split-clause')
         t1 = ParThen(_t, t2)
         solver = OrElse(t1, t2).solver()
